@@ -3,58 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR Scanner</title>
+<title>Camera Test</title>
 <style>
-  body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #111; color: #0f0; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #111; color: #0f0; font-family: sans-serif; }
   video { width: 90vw; max-width: 500px; border: 2px solid #0f0; border-radius: 10px; }
-  #result { margin-top: 20px; font-size: 1.2rem; }
-  button { margin-top: 15px; padding: 10px 20px; font-size: 1rem; background: #0f0; color: #111; border: none; border-radius: 5px; cursor: pointer; }
+  button { margin-top: 20px; padding: 10px 20px; font-size: 1rem; background: #0f0; color: #111; border: none; border-radius: 5px; cursor: pointer; }
+  #status { margin-top: 15px; }
 </style>
 </head>
 <body>
 
-<h1>QR Scanner</h1>
+<h1>Camera Test</h1>
 <video id="video" autoplay playsinline></video>
-<div id="result">Scan a QR code...</div>
 <button id="startBtn">Start Camera</button>
+<div id="status">Camera not started</div>
 
-<script type="module">
-import { scan, ready } from 'https://cdn.jsdelivr.net/npm/qr-scanner-wechat@latest/dist/qr-scanner-wechat.esm.js';
-
+<script>
 const video = document.getElementById('video');
-const resultDiv = document.getElementById('result');
 const startBtn = document.getElementById('startBtn');
+const status = document.getElementById('status');
 
 startBtn.addEventListener('click', async () => {
   startBtn.disabled = true;
-  resultDiv.textContent = 'Loading scanner...';
-  
-  await ready(); // preload WASM + model files
+  status.textContent = 'Starting camera...';
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     video.srcObject = stream;
-    
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    const scanFrame = async () => {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const qr = await scan(canvas).catch(() => null);
-        if (qr?.text) {
-          resultDiv.textContent = `QR Code: ${qr.text}`;
-          return; // stop scanning
-        }
-      }
-      requestAnimationFrame(scanFrame);
-    };
-
-    scanFrame();
+    status.textContent = 'Camera started! Point at a QR code.';
   } catch (err) {
-    resultDiv.textContent = 'Error accessing camera: ' + err.message;
+    console.error(err);
+    status.textContent = 'Error accessing camera: ' + err.message;
     startBtn.disabled = false;
   }
 });
